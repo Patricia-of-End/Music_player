@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ローカルメディアプレイヤー</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-900 text-slate-200 flex-container-for-player">
+    <canvas id="visualizerCanvas"></canvas>
+
+    <div class="player-container bg-slate-800 shadow-xl rounded-lg p-6 md:p-8 w-full max-w-2xl relative z-10">
+        <header class="mb-6 text-center">
+            <h1 class="text-3xl font-bold text-sky-400">ローカルメディアプレイヤー</h1>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 items-start">
+            <div class="md:col-span-1 flex flex-col justify-start items-center">
+                <img id="albumArt" src="https://placehold.co/200x200/e0e0e0/757575?text=Album+Art" alt="アルバムアート" class="w-48 h-48 md:w-full md:h-auto object-cover rounded-lg shadow-md mb-1 hidden">
+                <!-- プレースホルダーをSVGから "No Art" テキストのimgタグに変更 -->
+                <img id="albumArtPlaceholder" src="https://placehold.co/200x200/666/ccc?text=No+Art" alt="アルバムアートなし" class="w-48 h-48 md:w-full md:h-auto object-cover rounded-lg shadow-md mb-1">
+                
+                <div id="fileInfo" class="text-xs text-slate-400 w-full text-center mt-1 space-y-0">
+                    <div><span class="font-medium text-slate-500">形式:</span> <span id="fileType" class="text-sky-300">N/A</span></div>
+                    <div><span class="font-medium text-slate-500">サンプリングレート:</span> <span id="sampleRate" class="text-sky-300">N/A</span></div>
+                    <div><span class="font-medium text-slate-500">ビットレート:</span> <span id="bitRate" class="text-sky-300">N/A</span></div>
+                    <div><span class="font-medium text-slate-500">ファイルサイズ:</span> <span id="fileSize" class="text-sky-300">N/A</span></div>
+                </div>
+            </div>
+
+            <div class="md:col-span-2 space-y-4">
+                <div>
+                    <h2 id="trackTitle" class="text-2xl font-semibold text-slate-100 marquee-parent" title="曲名">
+                        <span class="marquee-child">曲名未選択</span>
+                    </h2>
+                    <p id="trackArtist" class="text-lg text-slate-300 marquee-parent" title="アーティスト">
+                        <span class="marquee-child">アーティスト不明</span>
+                    </p>
+                    <p id="trackAlbum" class="text-md text-slate-400 marquee-parent" title="アルバム">
+                        <span class="marquee-child">アルバム不明</span>
+                    </p>
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <label for="audioFile" class="block text-sm font-medium text-slate-300 mb-1">音声ファイル:</label>
+                        <input type="file" id="audioFile" accept="audio/*" class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-sky-600 file:text-sky-50 hover:file:bg-sky-700">
+                    </div>
+                    <div class="flex items-end space-x-2">
+                        <div class="flex-grow">
+                            <label for="lrcFile" class="block text-sm font-medium text-slate-300 mb-1">LRCファイル (任意):</label>
+                            <input type="file" id="lrcFile" accept=".lrc" class="w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-emerald-600 file:text-emerald-50 hover:file:bg-emerald-700">
+                        </div>
+                        <button id="clearLrcBtn" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-md text-sm font-medium shadow-sm transition duration-150 ease-in-out disabled-button" disabled>
+                            LRCクリア
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <audio id="audioPlayer" class="hidden" crossOrigin="anonymous"></audio>
+        <div class="space-y-3 mb-6">
+            <div class="flex items-center space-x-4">
+                <button id="playPauseBtn" class="bg-sky-600 hover:bg-sky-700 text-white p-3 rounded-full shadow-md transition duration-150 ease-in-out disabled-button" disabled>
+                     <!-- 再生・一時停止アイコンはJSで切り替えるため、SVGを両方用意しておく -->
+                    <svg id="playIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-play-fill" viewBox="0 0 16 16">
+                        <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+                    </svg>
+                    <svg id="pauseIcon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-pause-fill hidden" viewBox="0 0 16 16">
+                        <path d="M5.5 3.5A1.5 1.5 0 0 1 7 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5m5 0A1.5 1.5 0 0 1 12 5v6a1.5 1.5 0 0 1-3 0V5a1.5 1.5 0 0 1 1.5-1.5"/>
+                    </svg>
+                </button>
+                <input type="range" id="seekBar" value="0" class="flex-grow cursor-pointer" disabled>
+                <div id="timeDisplay" class="text-sm text-slate-400 w-24 text-right">0:00 / 0:00</div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-volume-down-fill text-slate-400" viewBox="0 0 16 16">
+                    <path d="M9 4a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.5-.5zm-2.5.5A.5.5 0 0 1 7 4h1a.5.5 0 0 1 0 1H7a.5.5 0 0 1-.5-.5M12 4a.5.5 0 0 0-.5.5v7a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.5-.5zM4.312 7.672a.5.5 0 0 0-.624 0L2.048 9.95a.5.5 0 0 0 0 .707L3.688 12.33a.5.5 0 0 0 .624 0l1.64-1.677a.5.5 0 0 0 0-.707zm-1.181.193L2.048 8.95A.5.5 0 0 0 1 8.95l-.5.5a.5.5 0 0 0 0 .707L2.048 11.7a.5.5 0 0 0 .707 0l1.286-1.286a.5.5 0 0 0 0-.707L3.13 8.552v-.001a.5.5 0 0 0-.707 0L1.33 9.638a.5.5 0 0 0-.707.707l.707.707a.5.5 0 0 0 .707 0L3.13 9.958l.707-.707a.5.5 0 0 0 0-.707L3.13 7.865z"/>
+                </svg>
+                <input type="range" id="volumeBar" min="0" max="1" step="0.01" value="0.5" class="w-24 cursor-pointer">
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <h3 class="text-xl font-semibold mb-2 text-slate-200">歌詞</h3>
+            <div id="lyricsContainer" class="lyrics-container">
+                <p class="text-slate-500">LRCファイルを読み込むか、音声ファイルに歌詞情報が含まれていれば表示されます。</p>
+            </div>
+        </div>
+
+        <div id="messageArea" class="mt-4 text-sm"></div>
+    </div>
+
+    <script src="script.js" defer></script>
+</body>
+</html>
