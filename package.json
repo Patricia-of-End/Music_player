@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "server": "http-server -o"
+  }
+}

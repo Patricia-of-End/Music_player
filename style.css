@@ -1,148 +1,90 @@
-/* スタイル定義 */
-body { /* bodyタグ自体にはTailwindのクラスを直接書かず、汎用的なスタイルのみ */
+/* style.css */
+body {
     font-family: 'Inter', sans-serif;
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    /* background-color と text-color はHTMLのクラスで設定 */
-}
-
-/* bodyに適用する新しいクラス */
-.flex-container-for-player {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     min-height: 100vh;
-    padding: 1rem; /* 画面端の余白 */
+    margin: 0;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    box-sizing: border-box;
 }
-
 
 #visualizerCanvas {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100vw; 
-    height: 100vh; 
-    z-index: -1;  /* 必ず最背面 */
-    /* background-color: rgba(229, 231, 235, 0.7); /* デバッグ用に薄い背景色 (元のbg-gray-100に近い色) */
-    background-color: transparent; /* または透明に */
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
 }
 
 .player-container {
-    /* HTML側で Tailwindのクラス (bg-white shadow-xl rounded-lg p-6 md:p-8 w-full max-w-2xl relative z-10) が適用 */
-    /* ここで margin: auto; を追加して、より確実に中央寄せを試みることも可能 */
-    /* ただし、親の .flex-container-for-player で中央寄せされるはず */
+    z-index: 10;
+    position: relative;
 }
 
-/* ファイル情報エリアの微調整 (必要であれば) */
-#fileInfo div {
-    line-height: 1.4; /* 行の高さを少し調整して詰める */
+#equalizerPanel.hidden,
+#tonePanel.hidden,
+#ambiencePanel.hidden,
+#vocalCutPanel.hidden {
+    display: none;
 }
-/* HTML側で space-y-0 を指定しているので、個々のdivのマージンは基本的に0のはず */
-/* もしさらに詰めたい場合は、以下のような指定も検討できます */
-/*
-#fileInfo div:not(:last-child) {
-    margin-bottom: 1px; 
-}
-*/
 
+.eq-panel-content,
+.tone-panel-content,
+.ambience-panel-content,
+.vocal-cut-panel-content {
+    animation: fade-in 0.3s ease-out forwards;
+}
 
-.lyrics-container {
-    height: 200px; 
-    overflow-y: auto;
-    border: 1px solid #334155; /* slate-700 */
-    border-radius: 0.5rem; 
-    padding: 1rem; 
-    background-color: #1e293b; /* slate-800 */
-    scroll-behavior: smooth;
+@keyframes fade-in {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
 }
-.lyrics-line {
-    padding: 0.25rem 0; 
-    transition: all 0.3s ease;
-    border-radius: 0.25rem; 
-    text-align: center; 
-    cursor: pointer; 
+
+.tone-control-group input[type="range"],
+.ambience-control-group input[type="range"] {
+    height: 8px;
+    width: 100%;
 }
-.lyrics-line:hover {
-    background-color: #334155; /* slate-700 */
+
+input:checked ~ .dot {
+  transform: translateX(100%);
+  background-color: #0ea5e9;
 }
-.lyrics-line.highlighted {
-    background-color: #0f766e; /* teal-700 */
-    color: #ccfbf1; /* teal-100 */
-    font-weight: 600; 
-    padding-left: 0.5rem; 
-    padding-right: 0.5rem; 
+input:checked ~ .block {
+    background-color: #38bdf8;
 }
+
+.equalizer-container { min-height: 180px; }
+.equalizer-band { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 150px; }
+.equalizer-band input[type="range"] { writing-mode: bt-lr; -webkit-appearance: slider-vertical; width: 8px; height: 100px; padding: 0 5px; margin-bottom: 8px; }
+.equalizer-band label { font-size: 0.75rem; color: #94a3b8; }
+
+.lyrics-container { height: 200px; overflow-y: auto; background-color: rgba(255, 255, 255, 0.05); border-radius: 0.375rem; padding: 1rem; border: 1px solid rgba(255, 255, 255, 0.1); color: #e2e8f0; -webkit-user-select: none; -ms-user-select: none; user-select: none; text-align: center; }
+.lyrics-line { padding: 0.3rem 0; transition: color 0.3s ease, background-color 0.3s ease; cursor: pointer; border-radius: 0.25rem; }
+.lyrics-line:hover { background-color: rgba(255, 255, 255, 0.1); }
+.lyrics-line.highlighted { color: #67e8f9; font-weight: 600; }
+
 .lyrics-container::-webkit-scrollbar { width: 8px; }
-.lyrics-container::-webkit-scrollbar-track { background: #334155; border-radius: 10px; } /* slate-700 */
-.lyrics-container::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; } /* slate-600 */
-.lyrics-container::-webkit-scrollbar-thumb:hover { background: #64748b; } /* slate-500 */
+.lyrics-container::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
+.lyrics-container::-webkit-scrollbar-thumb { background: rgba(125, 211, 252, 0.5); border-radius: 10px; }
+.lyrics-container::-webkit-scrollbar-thumb:hover { background: rgba(56, 189, 248, 0.7); }
 
-input[type="file"] { transition: all 0.3s ease; }
-input[type="file"]::-webkit-file-upload-button { visibility: hidden; width: 0; height: 0; padding: 0; margin: 0; border: none; }
-input[type="file"]::before {
-    content: 'ファイルを選択'; display: inline-block; background: #3b82f6; color: white;
-    border-radius: 0.375rem; padding: 0.5rem 1rem; outline: none; white-space: nowrap;
-    -webkit-user-select: none; user-select: none; cursor: pointer; font-weight: 500; 
-    transition: all 0.3s ease;
-}
-input[type="file"]:hover::before { background: #2563eb; }
-input[type="file"]:active::before { background: #1d4ed8; }
+input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; background: #334155; border-radius: 5px; outline: none; opacity: 0.7; transition: opacity .2s; }
+input[type="range"]:hover:not(:disabled) { opacity: 1; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; background: #0ea5e9; border-radius: 50%; cursor: pointer; border: 2px solid #f8fafc; }
+input[type="range"]::-moz-range-thumb { width: 14px; height: 14px; background: #0ea5e9; border-radius: 50%; cursor: pointer; border: 2px solid #f8fafc; }
+input[type="range"]:disabled { opacity: 0.4; cursor: not-allowed; }
+input[type="range"]:disabled::-webkit-slider-thumb { background: #475569; border-color: #64748b; }
+input[type="range"]:disabled::-moz-range-thumb { background: #475569; border-color: #64748b; }
 
-input[type="range"] {
-    -webkit-appearance: none; appearance: none; width: 100%; height: 8px;
-    background: #475569; /* slate-600 */ border-radius: 5px; outline: none; opacity: 0.7;
-    transition: opacity .2s;
-}
-input[type="range"]:hover { opacity: 1; }
-input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none; appearance: none; width: 18px; height: 18px;
-    background: #38bdf8; /* sky-400 */ border-radius: 50%; cursor: pointer;
-}
-input[type="range"]::-moz-range-thumb {
-    width: 18px; height: 18px; background: #38bdf8; /* sky-400 */ border-radius: 50%;
-    cursor: pointer; border: none;
-}
-.disabled-button { opacity: 0.5; cursor: not-allowed !important; }
-.placeholder-icon {
-    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
-    background-color: #334155; /* slate-700 */ color: #94a3b8; /* slate-400 */
-}
-
-.marquee-parent {
-  width: 100%; 
-  overflow: hidden; 
-  white-space: nowrap; 
-  box-sizing: border-box;
-  text-overflow: ellipsis; 
-}
-
-.marquee-parent.is-actually-scrolling {
-    text-overflow: clip; 
-}
-
-.marquee-child {
-  display: inline-block; 
-  padding-left: 0; 
-  transform: translateX(0px);
-  vertical-align: middle;
-}
-
-.marquee-child.start-scroll-setup {
-  padding-left: 100%; 
-}
-
-.marquee-child.animate-scroll {
-  animation: marquee-animation-scroll var(--animation-duration, 10s) linear 1; 
-  animation-delay: 0s; 
-}
-
-@keyframes marquee-animation-scroll {
-  0% {
-    transform: translateX(0px); 
-  }
-  100% {
-    transform: translateX(var(--marquee-transform-x-target)); 
-  }
-}
+.marquee-parent { width: 100%; overflow: hidden; white-space: nowrap; position: relative; }
+.marquee-child { display: inline-block; white-space: nowrap; will-change: transform; }
+.animate-scroll { animation-name: scroll-text; animation-timing-function: linear; animation-duration: var(--animation-duration, 10s); animation-iteration-count: 1; transform: translateX(var(--marquee-transform-x-target)); }
+@keyframes scroll-text { from { transform: translateX(0%); } to { transform: translateX(var(--marquee-transform-x-target)); } }
+.disabled-button { opacity: 0.5; cursor: not-allowed; }
